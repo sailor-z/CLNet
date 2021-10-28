@@ -130,8 +130,8 @@ def valid(valid_loader, model, opt):
     model.eval()
     err_ts, err_Rs = [], []
     for idx, valid_data in enumerate(tqdm(valid_loader)):
-        xs = valid_data['xs'].cuda(opt.gpu)
-        ys = valid_data['ys'].cuda(opt.gpu)
+        xs = valid_data['xs'].cuda()
+        ys = valid_data['ys'].cuda()
 
         _, _, e_hat, y_hat = model(xs, ys)
 
