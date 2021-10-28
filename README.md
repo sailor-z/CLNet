@@ -4,7 +4,7 @@
  * [[paper](https://arxiv.org/abs/2101.00591#)]
 
 # Citing CLNet
-If you find the CLNet code or data useful, please consider citing:
+If you find the CLNet code useful, please consider citing:
 
 ```bibtex
 @inproceedings{zhao2021progressive,
