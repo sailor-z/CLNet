@@ -46,7 +46,7 @@ def test(opt, thr=1e-4, use_ransac=True):
         mkpts0 = xs.squeeze()[:, :2].cpu().detach().numpy()
         mkpts1 = xs.squeeze()[:, 2:].cpu().detach().numpy()
 
-        mask = y_hat.squeeze().cpu().detach().numpy() < thr #5e-5 best
+        mask = y_hat.squeeze().cpu().detach().numpy() < thr
         mask_kp0 = mkpts0[mask]
         mask_kp1 = mkpts1[mask]
 
