@@ -7,7 +7,7 @@
 If you find the CLNet code or data useful, please consider citing:
 
 ```bibtex
-@inproceedings{park2019latentfusion,
+@inproceedings{zhao2021progressive,
   title={Progressive Correspondence Pruning by Consensus Learning},
   author={Zhao, Chen and Ge, Yixiao and Zhu, Feng and Zhao, Rui and Li, Hongsheng and Salzmann, Mathieu},
   booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision.},
