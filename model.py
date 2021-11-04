@@ -36,7 +36,7 @@ def get_graph_feature(x, k=20, idx=None):
         idx_out = knn(x, k=k)
     else:
         idx_out = idx
-    device = torch.device('cuda')
+    device = x.device
 
     idx_base = torch.arange(0, batch_size, device=device).view(-1, 1, 1)*num_points
 
@@ -215,22 +215,22 @@ class DS_Block(nn.Module):
             self.embed_2 = ResNet_Block(self.out_channel, self.out_channel, pre=False)
             self.linear_2 = nn.Conv2d(self.out_channel, 2, (1, 1))
 
-    def down_sampling(self, x, y, weights, idx, features=None, predict=False):
+    def down_sampling(self, x, y, weights, indices, features=None, predict=False):
         B, _, N , _ = x.size()
-        idx = idx[:, :int(N*self.sr)]
+        indices = indices[:, :int(N*self.sr)]
         with torch.no_grad():
-            y_out = torch.gather(y, dim=-1, index=idx)
-            w_out = torch.gather(weights, dim=-1, index=idx)
-        idx = idx.view(B, 1, -1, 1)
+            y_out = torch.gather(y, dim=-1, index=indices)
+            w_out = torch.gather(weights, dim=-1, index=indices)
+        indices = indices.view(B, 1, -1, 1)
 
         if predict == False:
             with torch.no_grad():
-                x_out = torch.gather(x[:, :, :, :4], dim=2, index=idx.repeat(1, 1, 1, 4))
+                x_out = torch.gather(x[:, :, :, :4], dim=2, index=indices.repeat(1, 1, 1, 4))
             return x_out, y_out, w_out
         else:
             with torch.no_grad():
-                x_out = torch.gather(x[:, :, :, :4], dim=2, index=idx.repeat(1, 1, 1, 4))
-            feature_out = torch.gather(features, dim=2, index=idx.repeat(1, 128, 1, 1))
+                x_out = torch.gather(x[:, :, :, :4], dim=2, index=indices.repeat(1, 1, 1, 4))
+            feature_out = torch.gather(features, dim=2, index=indices.repeat(1, 128, 1, 1))
             return x_out, y_out, w_out, feature_out
 
     def forward(self, x, y):
@@ -246,16 +246,17 @@ class DS_Block(nn.Module):
 
         out = self.embed_1(out)
         w1 = self.linear_1(out).view(B, -1)
+
         if self.predict == False:
-            w1_ds, idx = torch.sort(w1, dim=-1, descending=True)
+            w1_ds, indices = torch.sort(w1, dim=-1, descending=True)
             w1_ds = w1_ds[:, :int(N*self.sr)]
-            x_ds, y_ds, w0_ds = self.down_sampling(x, y, w0, idx, None, self.predict)
+            x_ds, y_ds, w0_ds = self.down_sampling(x, y, w0, indices, None, self.predict)
 
             return x_ds, y_ds, [w0, w1], [w0_ds, w1_ds]
         else:
-            w1_ds, idx = torch.sort(w1, dim=-1, descending=True)
+            w1_ds, indices = torch.sort(w1, dim=-1, descending=True)
             w1_ds = w1_ds[:, :int(N*self.sr)]
-            x_ds, y_ds, w0_ds, out = self.down_sampling(x, y, w0, idx, out, self.predict)
+            x_ds, y_ds, w0_ds, out = self.down_sampling(x, y, w0, indices, out, self.predict)
             out = self.embed_2(out)
             w2 = self.linear_2(out)
             e_hat = weighted_8points(x_ds, w2)
@@ -274,9 +275,9 @@ class CLNet(nn.Module):
 
         x1, y1, ws0, w_ds0 = self.ds_0(x, y)
 
-        w0 = torch.relu(torch.tanh(w_ds0[0])).reshape(B, 1, -1, 1)
-        w1 = torch.relu(torch.tanh(w_ds0[1])).reshape(B, 1, -1, 1)
-        x_ = torch.cat([x1, w0.detach(), w1.detach()], dim=-1)
+        w_ds0[0] = torch.relu(torch.tanh(w_ds0[0])).reshape(B, 1, -1, 1)
+        w_ds0[1] = torch.relu(torch.tanh(w_ds0[1])).reshape(B, 1, -1, 1)
+        x_ = torch.cat([x1, w_ds0[0].detach(), w_ds0[1].detach()], dim=-1)
 
         x2, y2, ws1, w_ds1, e_hat = self.ds_1(x_, y1)
 
