@@ -4,10 +4,10 @@
  * [[paper](https://arxiv.org/abs/2101.00591#)]
 
 # Citing CLNet
-If you find the CLNet code or data useful, please consider citing:
+If you find the CLNet code useful, please consider citing:
 
 ```bibtex
-@inproceedings{park2019latentfusion,
+@inproceedings{zhao2021progressive,
   title={Progressive Correspondence Pruning by Consensus Learning},
   author={Zhao, Chen and Ge, Yixiao and Zhu, Feng and Zhao, Rui and Li, Hongsheng and Salzmann, Mathieu},
   booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision.},
@@ -43,7 +43,7 @@ The initial matches are generated over SIFT by default. The ones based on ORB an
 
 We provide a pretrained model on YFCC100M. The results in our paper can be reproduced by running the test script:
 
-    python ./test.py --use_ransac True --data_te ./data_dump/yfcc-sift-2000-test.hdf5 --output_dir ./logs/CLNet_yfcc_sift --model_path ../models/yfcc_pretrained_model.pth
+    python ./test.py --use_ransac True --data_te ./data_dump/yfcc-sift-2000-test.hdf5 --output_dir ./logs/CLNet_yfcc_sift --model_path ./pretrained_models/clnet_yfcc_sift.pth
 
 ## Train model on YFCC100M
 Please run the training script to train our model on YFCC100M after the data processing is done.
