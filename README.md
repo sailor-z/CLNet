@@ -21,7 +21,7 @@ Please start by installing the required libraries:
     pip install -r requirements.txt
 
 # Data Processing
-The code of this part is partially borrowed from [[OANet](https://github.com/zjhthu/OANet)]. Please follow their instructions to download the training and testing data.
+The code of this part is partially borrowed from [[OANet](https://github.com/zjhthu/OANet)] [[CNe](https://github.com/vcg-uvic/learned-correspondence-release)]. Please follow their instructions to download the training and testing data.
 
     bash download_data.sh raw_data raw_data_yfcc.tar.gz 0 8 ## YFCC100M
     tar -xvf raw_data_yfcc.tar.gz
