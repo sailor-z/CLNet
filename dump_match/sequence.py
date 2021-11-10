@@ -10,7 +10,6 @@ from six.moves import xrange
 from feature_match import computeNN
 from utils import saveh5, loadh5
 from geom import load_geom, parse_geom, get_episym
-from transformations import quaternion_from_matrix
 
 class Sequence(object):
     def __init__(self, dataset_path, dump_dir, desc_name, vis_th, pair_num, pair_name=None):
