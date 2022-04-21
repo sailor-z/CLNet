@@ -15,23 +15,11 @@ def add_argument_group(name):
 # Network
 net_arg = add_argument_group("Network")
 net_arg.add_argument(
-    "--net_depth", type=int, default=12, help=""
-    "number of layers. Default: 12")
-net_arg.add_argument(
-    "--clusters", type=int, default=500, help=""
-    "cluster number in OANet. Default: 500")
-net_arg.add_argument(
-    "--iter_num", type=int, default=1, help=""
-    "iteration number in the iterative network. Default: 1")
-net_arg.add_argument(
     "--net_channels", type=int, default=128, help=""
     "number of channels in a layer. Default: 128")
 net_arg.add_argument(
     "--use_fundamental", type=str2bool, default=False, help=""
     "train fundamental matrix estimation. Default: False")
-net_arg.add_argument(
-    "--share", type=str2bool, default=False, help=""
-    "share the parameter in iterative network. Default: False")
 net_arg.add_argument(
     "--use_ratio", type=int, default=0, help=""
     "use ratio test. 0: not use, 1: use before network, 2: use as side information. Default: 0")
@@ -57,7 +45,6 @@ data_arg.add_argument(
 data_arg.add_argument(
     "--data_te", type=str, default='./data_dump/yfcc-sift-2000-test.hdf5', help=""
     "name of the unseen dataset for test")
-
 
 # -----------------------------------------------------------------------------
 # Objective
@@ -124,6 +111,12 @@ train_arg.add_argument(
 train_arg.add_argument(
     "--train_iter", type=int, default=500000, help=""
     "training iterations to perform")
+train_arg.add_argument(
+    "--lr_step", type=int, default=400000, help=""
+    "learning rate decay step")
+train_arg.add_argument(
+    "--gamma", type=int, default=0.1, help=""
+    "gamma for learning rate decay")
 train_arg.add_argument(
     "--log_base", type=str, default="./logs/", help=""
     "save directory name inside results")

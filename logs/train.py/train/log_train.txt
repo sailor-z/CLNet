@@ -1,3 +1,0 @@
-Learning Rate	Essential Loss	Inlier ratio	Classfi Loss	
-0.001000	0.089167	0.090737	7.205099	
-0.001000	0.046766	0.351281	3.415914	

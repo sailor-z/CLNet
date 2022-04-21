@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from torch import nn
 import torch.optim as optim
 from tqdm import trange, tqdm
 import os
@@ -7,13 +8,15 @@ import sys
 
 from datasets import collate_fn, CorrespondencesDataset
 from config import get_config, print_usage
-from utils import (compute_pose_error, pose_auc, estimate_pose_norm_kpts, estimate_pose_from_E, torch_skew_symmetric, tocuda)
+from utils import compute_pose_error, pose_auc, estimate_pose_norm_kpts, estimate_pose_from_E, tocuda
 from logger import Logger
 from loss import MatchLoss
 from model import CLNet
 
+torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.enabled = True
 torch.backends.cudnn.benchmark = True
+torch.autograd.set_detect_anomaly(True)
 
 def create_log_dir(opt):
     if opt.log_suffix == "":
@@ -37,14 +40,12 @@ def create_log_dir(opt):
     opt.log_path = result_path+'/train'
 
 def train_step(step, optimizer, model, match_loss, data):
-    model.train()
     xs = data['xs']
     ys = data['ys']
 
     logits, ys_ds, e_hat, y_hat = model(xs, ys)
     loss, ess_loss, classif_loss = match_loss.run(step, data, logits, ys_ds, e_hat, y_hat)
     optimizer.zero_grad()
-    loss.backward()
     optimizer.step()
 
     with torch.no_grad():
@@ -53,11 +54,11 @@ def train_step(step, optimizer, model, match_loss, data):
         inlier_ratio = torch.sum(is_pos, dim=-1) / (torch.sum(is_pos, dim=-1) + torch.sum(is_neg, dim=-1))
         inlier_ratio = inlier_ratio.mean().item()
 
-    return [ess_loss, inlier_ratio, classif_loss]
+    return [ess_loss, classif_loss, inlier_ratio]
 
 
 def train(model, train_loader, valid_loader, opt):
-    optimizer = optim.Adam(model.parameters(), lr=opt.train_lr, weight_decay = opt.weight_decay)
+    optimizer = optim.Adam(model.parameters(), lr=opt.train_lr, weight_decay=opt.weight_decay)
     match_loss = MatchLoss(opt)
 
     checkpoint_path = os.path.join(opt.log_path, 'checkpoint.pth')
@@ -72,6 +73,7 @@ def train(model, train_loader, valid_loader, opt):
 
         logger_valid = Logger(os.path.join(opt.log_path, 'log_valid.txt'), title='clnet', resume=True)
         logger_train = Logger(os.path.join(opt.log_path, 'log_train.txt'), title='clnet', resume=True)
+
     else:
         best_acc = -1
         start_epoch = 0
@@ -83,7 +85,9 @@ def train(model, train_loader, valid_loader, opt):
 
     train_loader_iter = iter(train_loader)
 
-    for step in trange(start_epoch, opt.train_iter):
+    tbar = trange(start_epoch, opt.train_iter)
+
+    for step in tbar:
         try:
             train_data = next(train_loader_iter)
         except StopIteration:
@@ -94,7 +98,16 @@ def train(model, train_loader, valid_loader, opt):
 
         # run training
         cur_lr = optimizer.param_groups[0]['lr']
-        loss_vals = train_step(step, optimizer, model, match_loss, train_data)
+
+        try:
+            loss_vals = train_step(step, optimizer, model, match_loss, train_data)
+        except:
+            print("Skip unstable step")
+            continue
+
+        tbar.set_description('Doing: {}/{}, LR: {}, E_loss: {}, Cls_loss: {}, Inlier_Ratio: {}'\
+        .format(step, opt.train_iter, cur_lr, loss_vals[0], loss_vals[1], loss_vals[2]))
+
         if step % 100 == 0:
             logger_train.append([cur_lr] + loss_vals)
 
@@ -104,7 +117,6 @@ def train(model, train_loader, valid_loader, opt):
 
         if b_validate:
             aucs5, aucs10, aucs20 = valid(valid_loader, model, opt)
-
             logger_valid.append([aucs5, aucs10, aucs20])
 
             va_res = aucs5
@@ -117,6 +129,8 @@ def train(model, train_loader, valid_loader, opt):
                 'best_acc': best_acc,
                 'optimizer' : optimizer.state_dict(),
                 }, os.path.join(opt.log_path, 'model_best.pth'))
+
+            model.train()
 
         if b_save:
             torch.save({

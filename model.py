@@ -151,7 +151,7 @@ class GCN_Block(nn.Module):
 
     def attention(self, w):
         w = torch.relu(torch.tanh(w)).unsqueeze(-1)
-        A = torch.bmm(w.transpose(1, 2), w)
+        A = torch.bmm(w, w.transpose(1, 2))
         return A
 
     def graph_aggregation(self, x, w):

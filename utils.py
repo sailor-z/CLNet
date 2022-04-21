@@ -2,13 +2,18 @@ import numpy as np
 import cv2
 import torch
 
+def adjust_lr(optimizer, init_lr, gamma):
+	for p in optimizer.param_groups:
+		p['lr'] = init_lr * gamma
+	return optimizer
+
 def tocuda(data):
 	# convert tensor data in dictionary to cuda when it is a tensor
 	for key in data.keys():
 		if type(data[key]) == torch.Tensor:
 			data[key] = data[key].cuda()
 	return data
-    
+
 def denorm(x, T):
     x = x * np.array([T[0,0], T[1,1]]) + np.array([T[0,2], T[1,2]])
     return x
@@ -38,24 +43,25 @@ def torch_skew_symmetric(v):
     return M
 
 def estimate_pose_norm_kpts(kpts0, kpts1, thresh=1e-3, conf=0.99999):
-    if len(kpts0) < 5:
-        return None
+	if len(kpts0) < 5:
+		return None
 
-    E, mask = cv2.findEssentialMat(
-        kpts0, kpts1, np.eye(3), threshold=thresh, prob=conf,
-        method=cv2.RANSAC)
+	E, mask = cv2.findEssentialMat(
+	kpts0, kpts1, np.eye(3), threshold=thresh, prob=conf,
+	method=cv2.RANSAC)
 
-    assert E is not None
+	assert E is not None
 
-    best_num_inliers = 0
-    ret = None
-    for _E in np.split(E, len(E) / 3):
-        n, R, t, _ = cv2.recoverPose(
-            _E, kpts0, kpts1, np.eye(3), 1e9, mask=mask)
-        if n > best_num_inliers:
-            best_num_inliers = n
-            ret = (R, t[:, 0], mask.ravel() > 0)
-    return ret
+	best_num_inliers = 0
+	new_mask = mask
+	ret = None
+	for _E in np.split(E, len(E) / 3):
+		n, R, t, mask_ = cv2.recoverPose(_E, kpts0, kpts1, np.eye(3), 1e9, mask=mask)
+		if n > best_num_inliers:
+			best_num_inliers = n
+			ret = (R, t[:, 0], mask.ravel() > 0)
+
+	return ret
 
 def estimate_pose_from_E(kpts0, kpts1, mask, E):
     assert E is not None
