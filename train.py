@@ -45,7 +45,9 @@ def train_step(step, optimizer, model, match_loss, data):
 
     logits, ys_ds, e_hat, y_hat = model(xs, ys)
     loss, ess_loss, classif_loss = match_loss.run(step, data, logits, ys_ds, e_hat, y_hat)
+    
     optimizer.zero_grad()
+    loss.backward()
     optimizer.step()
 
     with torch.no_grad():
