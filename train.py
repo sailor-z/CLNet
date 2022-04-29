@@ -45,7 +45,7 @@ def train_step(step, optimizer, model, match_loss, data):
 
     logits, ys_ds, e_hat, y_hat = model(xs, ys)
     loss, ess_loss, classif_loss = match_loss.run(step, data, logits, ys_ds, e_hat, y_hat)
-    
+
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
@@ -81,7 +81,7 @@ def train(model, train_loader, valid_loader, opt):
         start_epoch = 0
 
         logger_train = Logger(os.path.join(opt.log_path, 'log_train.txt'), title='clnet')
-        logger_train.set_names(['Learning Rate'] + ['Essential Loss', 'Inlier ratio', 'Classfi Loss'])
+        logger_train.set_names(['Learning Rate'] + ['Essential Loss', 'Classfi Loss', 'Inlier ratio'])
         logger_valid = Logger(os.path.join(opt.log_path, 'log_valid.txt'), title='clnet')
         logger_valid.set_names(['AUC5'] + ['AUC10', 'AUC20'])
 
