@@ -29,9 +29,15 @@ def test(opt, thr=1e-4, use_ransac=True):
     checkpoint = torch.load(opt.model_path, map_location=torch.device('cpu'))
 
     state_dict = {}
+
+    '''Load a parallelly trained model'''
     for key in checkpoint['state_dict'].keys():
         key_new = key.split('module')[1][1:]
         state_dict[key_new] = checkpoint['state_dict'][key]
+
+    '''Load a model trained on a single GPU'''
+#    state_dict = checkpoint['state_dict']
+
     model.load_state_dict(state_dict)
     model.cuda()
     model.eval()
